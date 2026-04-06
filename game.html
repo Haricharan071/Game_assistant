@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gaming Helper — Gaming FAQ Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050a0f;
+      --surface: #0b1622;
+      --panel: #0f1e2e;
+      --border: #1a3a52;
+      --accent: #00e5ff;
+      --accent2: #ff3d71;
+      --accent3: #a259ff;
+      --text: #c8dde8;
+      --text-dim: #4a7a99;
+      --glow: 0 0 20px rgba(0,229,255,0.35);
+      --glow-red: 0 0 20px rgba(255,61,113,0.35);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Exo 2', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,229,255,0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 100% 100%, rgba(162,89,255,0.07) 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 40% at 0% 100%, rgba(255,61,113,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(40px); }
+    }
+
+    /* Scanlines */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 820px;
+      height: 100vh;
+      max-height: 780px;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 24px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      position: relative;
+      clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 0 100%);
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent3), var(--accent2));
+      animation: borderPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes borderPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .bot-avatar {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: var(--glow);
+      flex-shrink: 0;
+      animation: avatarPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes avatarPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(0,229,255,0.35); }
+      50% { box-shadow: 0 0 40px rgba(0,229,255,0.7); }
+    }
+
+    .header-info { flex: 1; }
+
+    .bot-name {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 1.3rem;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(0,229,255,0.5);
+      letter-spacing: 0.1em;
+    }
+
+    .bot-status {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      background: #00ff88;
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .header-tag {
+      font-family: 'Orbitron', monospace;
+      font-size: 0.6rem;
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+      padding: 3px 8px;
+      letter-spacing: 0.15em;
+    }
+
+    /* Quick topics */
+    .topics-bar {
+      background: rgba(11,22,34,0.9);
+      border: 1px solid var(--border);
+      border-top: 1px solid rgba(0,229,255,0.15);
+      border-bottom: none;
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .topics-bar::-webkit-scrollbar { display: none; }
+
+    .topics-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      letter-spacing: 0.1em;
+    }
+
+    .topic-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.68rem;
+      padding: 4px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+      clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+    }
+
+    .topic-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0,229,255,0.05);
+      box-shadow: 0 0 12px rgba(0,229,255,0.15);
+    }
+
+    /* Chat area */
+    .chat-area {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Messages */
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: msgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .message.user { flex-direction: row-reverse; }
+
+    .msg-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+
+    .message.bot .msg-avatar {
+      background: linear-gradient(135deg, #0d2a3d, #1a4060);
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 10px rgba(0,229,255,0.2);
+    }
+
+    .message.user .msg-avatar {
+      background: linear-gradient(135deg, #2a0d1a, #401a28);
+      border: 1px solid var(--accent2);
+      box-shadow: 0 0 10px rgba(255,61,113,0.2);
+    }
+
+    .msg-bubble {
+      max-width: 75%;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    .message.bot .msg-bubble {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--accent);
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    }
+
+    .message.user .msg-bubble {
+      background: rgba(255,61,113,0.08);
+      border: 1px solid rgba(255,61,113,0.25);
+      border-right: 2px solid var(--accent2);
+      clip-path: polygon(0 10px, 10px 0, 100% 0, 100% 100%, 0 100%);
+      color: #e8c0cc;
+    }
+
+    .msg-meta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-top: 5px;
+      letter-spacing: 0.05em;
+    }
+
+    .message.user .msg-meta { text-align: right; }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 12px;
+      animation: msgIn 0.3s ease both;
+    }
+
+    .typing-dots {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--accent);
+      padding: 14px 20px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: dotBounce 1.4s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.16s; background: var(--accent3); }
+    .dot:nth-child(3) { animation-delay: 0.32s; background: var(--accent2); }
+
+    @keyframes dotBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+      30% { transform: translateY(-8px); opacity: 1; }
+    }
+
+    /* Input area */
+    .input-area {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top: 1px solid rgba(0,229,255,0.2);
+      padding: 14px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 24px 100%, 0 calc(100% - 24px));
+    }
+
+    .input-field {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.88rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(0,229,255,0.15);
+    }
+
+    .input-field::placeholder { color: var(--text-dim); }
+
+    .send-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border: none;
+      color: var(--bg);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 10px 18px;
+      cursor: pointer;
+      letter-spacing: 0.15em;
+      transition: all 0.2s;
+      clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    }
+
+    .send-btn:hover:not(:disabled) {
+      box-shadow: 0 0 25px rgba(0,229,255,0.5);
+      transform: translateY(-1px);
+    }
+
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Welcome */
+    .welcome-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      padding: 24px;
+      text-align: center;
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+    }
+
+    .welcome-card h2 {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-shadow: 0 0 20px rgba(0,229,255,0.5);
+      letter-spacing: 0.1em;
+    }
+
+    .welcome-card p {
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .quick-questions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .quick-q {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      clip-path: polygon(5px 0, 100% 0, 100% 100%, 0 100%, 0 5px);
+    }
+
+    .quick-q:hover {
+      border-color: var(--accent3);
+      color: var(--accent3);
+      background: rgba(162,89,255,0.08);
+    }
+
+    /* Scrollbar fix */
+    * { scroll-behavior: smooth; }
+  </style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="app-wrapper">
+
+  <div class="header">
+    <div class="bot-avatar">🎮</div>
+    <div class="header-info">
+      <div class="bot-name">GAMING HELPER</div>
+      <div class="bot-status">
+        <span class="status-dot"></span>
+        NEURAL LINK ACTIVE — GAMING FAQ ASSISTANT
+      </div>
+    </div>
+    <div class="header-tag">v2.0.77</div>
+  </div>
+
+  <div class="topics-bar">
+    <span class="topics-label">TOPICS://</span>
+    <button class="topic-btn" onclick="askTopic('How do I get better at FPS games?')">🎯 FPS Tips</button>
+    <button class="topic-btn" onclick="askTopic('What are the best RPG games in 2025?')">⚔️ RPGs</button>
+    <button class="topic-btn" onclick="askTopic('How do I reduce input lag in games?')">⚡ Performance</button>
+    <button class="topic-btn" onclick="askTopic('What is a Battle Pass and is it worth it?')">🎟️ Battle Pass</button>
+    <button class="topic-btn" onclick="askTopic('How does matchmaking work in competitive games?')">🏆 Ranked</button>
+    <button class="topic-btn" onclick="askTopic('PS5 vs Xbox Series X — which should I buy?')">🕹️ Consoles</button>
+    <button class="topic-btn" onclick="askTopic('How do I stop getting motion sickness in VR?')">🥽 VR</button>
+    <button class="topic-btn" onclick="askTopic('What gaming PC should I build on a budget?')">💻 PC Build</button>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="welcome-card">
+      <h2>// SYSTEM ONLINE: GAMING HELPER</h2>
+      <p>I'm Gaming Helper — your static gaming FAQ assistant. Ask me anything about games, hardware, tips, esports, or anything gaming-related. I'm locked, loaded, and ready.</p>
+      <div class="quick-questions">
+        <button class="quick-q" onclick="askTopic('How do I improve my reaction time for gaming?')">⚡ Reaction Time</button>
+        <button class="quick-q" onclick="askTopic('What is the meta in competitive games?')">📊 What is Meta?</button>
+        <button class="quick-q" onclick="askTopic('What gaming headset should I buy?')">🎧 Headsets</button>
+        <button class="quick-q" onclick="askTopic('How do I get into game streaming?')">📺 Streaming</button>
+        <button class="quick-q" onclick="askTopic('What is lag and how do I fix it?')">🔧 Fix Lag</button>
+        <button class="quick-q" onclick="askTopic('Explain loot boxes and are they gambling?')">🎲 Loot Boxes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input
+      class="input-field"
+      id="inputField"
+      type="text"
+      placeholder="Ask anything about gaming..."
+      onkeydown="if(event.key==='Enter') sendMessage()"
+      maxlength="500"
+    />
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">SEND ▶</button>
+  </div>
+
+</div>
+
+<script>
+  const chatArea = document.getElementById('chatArea');
+  const inputField = document.getElementById('inputField');
+  const sendBtn = document.getElementById('sendBtn');
+  let isLoading = false;
+
+  // Static Knowledge Base
+  const faqDatabase = [
+    {
+      keywords: ["fps", "shoot", "aim"],
+      answer: "To get better at FPS games:\n\n• **Lower your mouse sensitivity** for precise micro-adjustments.\n• **Practice crosshair placement** by always aiming at head-level.\n• **Learn map layouts** to anticipate where enemies will peek.\n• Warm up in aim trainers like Aim Lab or KovaaK's before jumping into competitive modes."
+    },
+    {
+      keywords: ["rpg", "role playing"],
+      answer: "The RPG genre is massive! For deep, turn-based combat and incredible storytelling, **Baldur's Gate 3** is a must-play. If you want a vast open world with action combat, try **Elden Ring**. For sci-fi fans, **Cyberpunk 2077** is currently in an incredible state."
+    },
+    {
+      keywords: ["lag", "input lag", "performance", "fps drop", "stutter"],
+      answer: "Fixing lag and performance issues:\n\n• **Network Lag (High Ping):** Switch from Wi-Fi to a wired Ethernet connection. Close background apps downloading data.\n• **Input Lag:** Turn *off* V-Sync in your game settings, enable NVIDIA Reflex (if applicable), and ensure your monitor is set to its highest refresh rate.\n• **Low FPS:** Lower shadows, volumetric fog, and anti-aliasing in your graphics settings. Make sure your GPU drivers are up to date."
+    },
+    {
+      keywords: ["battle pass"],
+      answer: "A **Battle Pass** is a monetization approach where you earn rewards (usually cosmetic items like skins, emotes, or banners) by playing the game and leveling up during a specific 'season'. \n\nAre they worth it? If it's a game you play daily and you care about cosmetics, yes—especially since many pay for the next season's pass if you complete them. If you only play casually, you can usually skip them."
+    },
+    {
+      keywords: ["ranked", "matchmaking", "sbmm", "mmr"],
+      answer: "Matchmaking in competitive games usually relies on **MMR (Matchmaking Rating)** or **SBMM (Skill-Based Matchmaking)**. The system calculates a hidden score based on your wins, losses, and sometimes individual performance. It then attempts to put you in lobbies with players who have a similar MMR to ensure a balanced, 50/50 chance of winning."
+    },
+    {
+      keywords: ["ps5", "xbox", "console"],
+      answer: "PS5 vs Xbox Series X:\n\n• **Choose PS5 if:** You care about exclusive single-player games (Spider-Man, God of War, Last of Us) and want the immersive haptic feedback of the DualSense controller.\n• **Choose Xbox if:** You want the incredible value of **Xbox Game Pass** to access hundreds of games for a monthly fee, or if your friends all play on the Xbox ecosystem.\n\nBoth offer near-identical graphical power and 4K capabilities!"
+    },
+    {
+      keywords: ["vr", "motion sickness", "virtual reality"],
+      answer: "VR motion sickness is common for beginners. To fix it:\n\n• **Start slow:** Play for 15-minute sessions and stop immediately if you feel warm or dizzy. Do not push through it.\n• **Use teleportation movement:** Avoid 'smooth locomotion' (walking with the thumbstick) until you have your VR legs.\n• Have a fan blowing air on your face while playing to ground your physical senses."
+    },
+    {
+      keywords: ["pc", "build", "budget pc"],
+      answer: "For a great budget 1080p gaming PC right now, look at building around an **AMD Ryzen 5 5600** CPU and an **AMD Radeon RX 6600** or **NVIDIA RTX 3060** GPU. Pair that with 16GB of DDR4 RAM and a 1TB NVMe SSD. This setup will run almost any modern game at 60+ FPS on medium/high settings."
+    },
+    {
+      keywords: ["reaction time", "reflexes"],
+      answer: "Improving reaction time takes practice. Ensure your hardware isn't holding you back (use a high refresh rate monitor like 144Hz+ and a wired mouse). Beyond that, get adequate sleep, stay hydrated, and use reaction-training minigames. However, game sense (predicting enemy actions) is often more valuable than raw reaction time!"
+    },
+    {
+      keywords: ["meta"],
+      answer: "**META** stands for *Most Effective Tactics Available*. It refers to the currently dominant strategy, weapons, or character team compositions in a game. For example, if a specific assault rifle is slightly overtuned in a patch, using it is considered 'playing the meta'."
+    },
+    {
+      keywords: ["headset", "headphones"],
+      answer: "For gaming headsets:\n\n• **Budget:** HyperX Cloud II or SteelSeries Arctis Nova 1.\n• **Wireless Mid-range:** Logitech G Pro X Wireless or SteelSeries Arctis Nova 7.\n• **Audiophile/High-End:** Skip 'gaming' headsets entirely and get a nice pair of studio headphones (like Beyerdynamic DT 900 Pro X) paired with a standalone USB microphone."
+    },
+    {
+      keywords: ["streaming", "twitch", "youtube"],
+      answer: "Getting into streaming:\n\n1. **Software:** Download OBS Studio (it's free and industry standard).\n2. **Hardware:** You need a decent CPU/GPU to encode video, a good microphone (audio quality is more important than video quality), and a stable internet upload speed (at least 6-10 Mbps).\n3. **Growth tip:** Don't just stream to 0 viewers on Twitch. Make highly edited YouTube or TikTok content to drive viewers to your live streams."
+    },
+    {
+      keywords: ["loot box", "loot boxes", "gambling"],
+      answer: "A **Loot Box** is a consumable virtual item which can be opened to receive a randomized selection of further virtual items (weapons, skins, etc.). Because you are paying real money for a chance at a rare item with hidden odds, many countries and gaming commissions now legally classify them as a form of gambling."
+    }
+  ];
+
+  function getTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function addMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    const isBot = role === 'bot';
+    div.innerHTML = `
+      <div class="msg-avatar">${isBot ? '🎮' : '👾'}</div>
+      <div>
+        <div class="msg-bubble">${escapeHtml(text)}</div>
+        <div class="msg-meta">${isBot ? 'GAMING HELPER' : 'PLAYER'} · ${getTime()}</div>
+      </div>
+    `;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+    return div;
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'typing-indicator';
+    div.id = 'typingIndicator';
+    div.innerHTML = `
+      <div class="msg-avatar bot-avatar" style="width:34px;height:34px;font-size:16px;border-radius:8px;background:linear-gradient(135deg,#0d2a3d,#1a4060);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;">🎮</div>
+      <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    `;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+              .replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  }
+
+  // Triggered by the quick-topic buttons
+  function askTopic(text) {
+      inputField.value = text;
+      sendMessage();
+  }
+
+  function sendMessage() {
+    const userText = inputField.value.trim();
+    if (!userText || isLoading) return;
+    
+    inputField.value = '';
+    isLoading = true;
+    sendBtn.disabled = true;
+
+    // Add user message
+    addMessage('user', userText);
+    showTyping();
+
+    // Simulate network delay / "thinking" time
+    setTimeout(() => {
+        removeTyping();
+        
+        let response = "Hmm, my databanks are drawing a blank on that. Try asking me about **FPS tips**, **RPG games**, **lag fixes**, **consoles**, or **PC builds**!";
+        let lowerText = userText.toLowerCase();
+
+        // Search the static database for a matching keyword
+        for (let entry of faqDatabase) {
+            if (entry.keywords.some(kw => lowerText.includes(kw))) {
+                response = entry.answer;
+                break;
+            }
+        }
+
+        addMessage('bot', response);
+        isLoading = false;
+        sendBtn.disabled = false;
+        inputField.focus();
+
+    }, 800 + Math.random() * 500); // Random delay between 0.8s and 1.3s
+  }
+</script>
+</body>
+</html>
